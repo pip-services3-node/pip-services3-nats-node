@@ -4,6 +4,7 @@ import { Descriptor } from 'pip-services3-commons-node';
 
 import { NatsMessageQueue } from '../queues/NatsMessageQueue';
 import { NatsBareMessageQueue } from '../queues/NatsBareMessageQueue';
+import { NatsConnection } from '../connect/NatsConnection';
 import { NatsMessageQueueFactory } from './NatsMessageQueueFactory';
 
 /**
@@ -14,7 +15,8 @@ import { NatsMessageQueueFactory } from './NatsMessageQueueFactory';
 export class DefaultNatsFactory extends Factory {
     private static readonly NatsQueueDescriptor: Descriptor = new Descriptor("pip-services", "message-queue", "nats", "*", "1.0");
     private static readonly NatsBareQueueDescriptor: Descriptor = new Descriptor("pip-services", "message-queue", "bare-nats", "*", "1.0");
-    private static readonly NatsQueueFactoryDescriptor: Descriptor = new Descriptor("pip-services", "queue-factory", "nats", "*", "1.0");
+	private static readonly NatsConnectionDescriptor: Descriptor = new Descriptor("pip-services", "connection", "nats", "*", "1.0");
+	private static readonly NatsQueueFactoryDescriptor: Descriptor = new Descriptor("pip-services", "queue-factory", "nats", "*", "1.0");
 
 	/**
 	 * Create a new instance of the factory.
@@ -29,6 +31,7 @@ export class DefaultNatsFactory extends Factory {
             let name = (typeof locator.getName === "function") ? locator.getName() : null; 
             return new NatsBareMessageQueue(name);
         });
+		this.registerAsType(DefaultNatsFactory.NatsConnectionDescriptor, NatsConnection);
 		this.registerAsType(DefaultNatsFactory.NatsQueueFactoryDescriptor, NatsMessageQueueFactory);
 	}
 }
