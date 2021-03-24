@@ -1,0 +1,53 @@
+{
+    "name": "pip-services3-nats-node",
+    "version": "3.0.0",
+    "author": "Conceptual Vision Consulting LLC",
+    "description": "NATS messaging for Pip.Services in Node.js",
+    "contributors": [
+        {
+            "name": "Sergey Seroukhov",
+            "email": "seroukhov@gmail.com"
+        }
+    ],
+    "main": "./obj/src/index.js",
+    "typings": "./obj/src/index.d.ts",
+    "keywords": [
+        "pip.services",
+        "microservice",
+        "communication",
+        "messaging",
+        "nats",
+        "library"
+    ],
+    "noAnalyze": true,
+    "repository": {
+        "type": "git",
+        "url": "ssh://git@github.com:pip-services3-node/pip-services3-nats-node.git"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": ">=0.6.14"
+    },
+    "private": false,
+    "scripts": {
+        "build": "tsc",
+        "watch": "tsc --watch",
+        "test": "mocha -t 10000 -R spec -u tdd --recursive ./obj/test",
+        "retest": "tsc && mocha -t 10000 -R spec -u tdd --recursive ./obj/test"
+    },
+    "dependencies": {
+        "nats": "^2.0.0",
+        "pip-services3-commons-node": "^3.0.0",
+        "pip-services3-components-node": "^3.0.0",
+        "pip-services3-messaging-node": "^3.0.0"
+    },
+    "devDependencies": {
+        "@types/async": "^2.0.0",
+        "@types/chai": "^4.0.0",
+        "@types/lodash": "^4.0.0",
+        "@types/mocha": "^8.0.0",
+        "@types/node": "*",
+        "chai": "^4.3.4",
+        "mocha": "^8.3.2"
+    }
+}
