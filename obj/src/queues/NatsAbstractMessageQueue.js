@@ -134,17 +134,6 @@ class NatsAbstractMessageQueue extends pip_services3_messaging_node_1.MessageQue
         }
     }
     /**
-     * Opens the component with given connection and credential parameters.
-     *
-     * @param correlationId     (optional) transaction id to trace execution through call chain.
-     * @param connection        connection parameters
-     * @param credential        credential parameters
-     * @param callback 			callback function that receives error or null no errors occured.
-     */
-    openWithParams(correlationId, connections, credential, callback) {
-        throw new Error("Not supported");
-    }
-    /**
      * Closes component and frees used resources.
      *
      * @param correlationId 	(optional) transaction id to trace execution through call chain.

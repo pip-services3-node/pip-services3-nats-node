@@ -10,8 +10,6 @@ import { CompositeLogger } from 'pip-services3-components-node';
 import { MessageQueue } from 'pip-services3-messaging-node';
 import { MessagingCapabilities } from 'pip-services3-messaging-node';
 import { MessageEnvelope } from 'pip-services3-messaging-node';
-import { ConnectionParams } from 'pip-services3-components-node';
-import { CredentialParams } from 'pip-services3-components-node';
 import { NatsConnection } from '../connect/NatsConnection';
 /**
  * Abstract NATS message queue with ability to connect to NATS server.
@@ -77,15 +75,6 @@ export declare abstract class NatsAbstractMessageQueue extends MessageQueue impl
      * @param callback 			callback function that receives error or null no errors occured.
      */
     open(correlationId: string, callback?: (err: any) => void): void;
-    /**
-     * Opens the component with given connection and credential parameters.
-     *
-     * @param correlationId     (optional) transaction id to trace execution through call chain.
-     * @param connection        connection parameters
-     * @param credential        credential parameters
-     * @param callback 			callback function that receives error or null no errors occured.
-     */
-    protected openWithParams(correlationId: string, connections: ConnectionParams[], credential: CredentialParams, callback: (err: any) => void): void;
     /**
      * Closes component and frees used resources.
      *

@@ -188,21 +188,7 @@ export abstract class NatsAbstractMessageQueue extends MessageQueue implements I
         }
 
     }
-
-    /**
-     * Opens the component with given connection and credential parameters.
-     * 
-     * @param correlationId     (optional) transaction id to trace execution through call chain.
-     * @param connection        connection parameters
-     * @param credential        credential parameters
-     * @param callback 			callback function that receives error or null no errors occured.
-     */
-    protected openWithParams(correlationId: string,
-        connections: ConnectionParams[], credential: CredentialParams,
-        callback: (err: any) => void): void {
-        throw new Error("Not supported");
-    }    
-
+    
     /**
 	 * Closes component and frees used resources.
 	 * 

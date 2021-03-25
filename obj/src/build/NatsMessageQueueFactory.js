@@ -21,25 +21,11 @@ class NatsMessageQueueFactory extends pip_services3_components_node_1.Factory {
         super();
         this.register(NatsMessageQueueFactory.NatsQueueDescriptor, (locator) => {
             let name = (typeof locator.getName === "function") ? locator.getName() : null;
-            let queue = new NatsMessageQueue_1.NatsMessageQueue(name);
-            if (this._config != null) {
-                queue.configure(this._config);
-            }
-            if (this._references != null) {
-                queue.setReferences(this._references);
-            }
-            return queue;
+            return this.createQueue(name);
         });
         this.register(NatsMessageQueueFactory.NatsBareQueueDescriptor, (locator) => {
             let name = (typeof locator.getName === "function") ? locator.getName() : null;
-            let queue = new NatsBareMessageQueue_1.NatsBareMessageQueue(name);
-            if (this._config != null) {
-                queue.configure(this._config);
-            }
-            if (this._references != null) {
-                queue.setReferences(this._references);
-            }
-            return queue;
+            return this.createBareQueue(name);
         });
     }
     /**
@@ -57,6 +43,34 @@ class NatsMessageQueueFactory extends pip_services3_components_node_1.Factory {
      */
     setReferences(references) {
         this._references = references;
+    }
+    /**
+     * Creates a message queue component and assigns its name.
+     * @param name a name of the created message queue.
+     */
+    createQueue(name) {
+        let queue = new NatsMessageQueue_1.NatsMessageQueue(name);
+        if (this._config != null) {
+            queue.configure(this._config);
+        }
+        if (this._references != null) {
+            queue.setReferences(this._references);
+        }
+        return queue;
+    }
+    /**
+     * Creates a bare message queue component and assigns its name.
+     * @param name a name of the created message queue.
+     */
+    createBareQueue(name) {
+        let queue = new NatsBareMessageQueue_1.NatsBareMessageQueue(name);
+        if (this._config != null) {
+            queue.configure(this._config);
+        }
+        if (this._references != null) {
+            queue.setReferences(this._references);
+        }
+        return queue;
     }
 }
 exports.NatsMessageQueueFactory = NatsMessageQueueFactory;
