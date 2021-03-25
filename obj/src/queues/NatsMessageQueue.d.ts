@@ -59,9 +59,8 @@ import { NatsAbstractMessageQueue } from './NatsAbstractMessageQueue';
  *     });
  */
 export declare class NatsMessageQueue extends NatsAbstractMessageQueue {
-    private _subscription;
-    private _messages;
-    private _cancel;
+    protected _messages: MessageEnvelope[];
+    protected _receiver: IMessageReceiver;
     /**
      * Creates a new instance of the message queue.
      *
@@ -122,7 +121,8 @@ export declare class NatsMessageQueue extends NatsAbstractMessageQueue {
      * @param callback          callback function that receives a message or error.
      */
     receive(correlationId: string, waitTimeout: number, callback: (err: any, result: MessageEnvelope) => void): void;
-    private receiveMessage;
+    onMessage(err: any, msg: any): void;
+    private sendMessageToReceiver;
     /**
      * Listens for incoming messages and blocks the current thread until queue is closed.
      *

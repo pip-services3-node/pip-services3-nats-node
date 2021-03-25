@@ -172,7 +172,7 @@ class NatsAbstractMessageQueue extends pip_services3_messaging_node_1.MessageQue
             closeCurl(null);
         }
     }
-    getSubscriptionSubject() {
+    getSubject() {
         return this._subject != null && this._subject != "" ? this._subject : this._name;
     }
     fromMessage(message) {
@@ -185,7 +185,6 @@ class NatsAbstractMessageQueue extends pip_services3_messaging_node_1.MessageQue
         headers.append("message_type", message.message_type);
         headers.append("sent_time", pip_services3_commons_node_2.StringConverter.toNullableString(message.sent_time || new Date()));
         return {
-            subject: this.getName(),
             data: data,
             headers: headers
         };
@@ -235,18 +234,9 @@ class NatsAbstractMessageQueue extends pip_services3_messaging_node_1.MessageQue
                 callback(err);
             return;
         }
+        let subject = this.getName() || this._subject;
         let msg = this.fromMessage(message);
-        this._client.publish(msg.subject, msg.data, { headers: msg.headers });
-        // .then(() => {
-        this._counters.incrementOne("queue." + this.getName() + ".sent_messages");
-        this._logger.debug(message.correlation_id, "Sent message %s via %s", message.toString(), this.toString());
-        if (callback)
-            callback(null);
-        // })
-        // .catch((err) => {
-        //     this._logger.error(message.correlation_id, err, "Failed to send message via %s", this.getName());
-        //     if (callback) callback(err);    
-        // });
+        this._connection.publish(subject, msg, callback);
     }
     /**
      * Renews a lock on a message that makes it invisible from other receivers in the queue.

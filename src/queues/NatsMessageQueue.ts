@@ -66,9 +66,8 @@ import { NatsAbstractMessageQueue } from './NatsAbstractMessageQueue';
  *     });
  */
 export class NatsMessageQueue extends NatsAbstractMessageQueue {
-    private _subscription: any;
-    private _messages: MessageEnvelope[] = [];
-    private _cancel: boolean = false;
+    protected _messages: MessageEnvelope[] = [];
+    protected _receiver: IMessageReceiver;
 
     /**
      * Creates a new instance of the message queue.
@@ -98,21 +97,21 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
             }
 
             // Subscribe right away
-            this._client.subscribe(
-                this.getSubscriptionSubject(),
-                { 
-                    queue: this._queueGroup,
-                    callback: (err, msg) => {
-                        if (err != null) {
-                            this._logger.error(correlationId, err, "Failed to subscribe to message queue");
-                        } else {
-                            this.receiveMessage(msg); 
-                        }
+            let subject = this.getSubject();
+            this._connection.subscribe(
+                subject,
+                { group: this._queueGroup },
+                this,
+                (err) => {
+                    if (err != null) {
+                        this._logger.error(correlationId, err, "Failed to subscribe to topic " + subject);
+                        this.close(correlationId, callback);
+                        return;
                     }
+
+                    if (callback) callback(err);
                 }
-            );  
-            
-            if (callback) callback(null);
+            );
         });
     }
 
@@ -128,10 +127,13 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
             return;
         }
 
+        // Unsubscribe from the topic
+        let subject = this.getSubject();
+        this._connection.unsubscribe(subject, this);
+    
         super.close(correlationId, (err) => {
-            this._subscription = null;
-            this._cancel = true;
             this._messages = [];
+            this._receiver = null;
 
             if (callback) callback(err);
         });
@@ -145,7 +147,6 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
      */
     public clear(correlationId: string, callback: (err?: any) => void): void {
         this._messages = [];
-        this._cancel = true;
         callback();
     }
 
@@ -246,7 +247,12 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
         );
     }
 
-    private receiveMessage(msg: any): void {
+    public onMessage(err: any, msg: any): void {
+        if (err != null || msg == null) {
+            this._logger.error(null, err, "Failed to receive a message");
+            return;
+        } 
+
         // Deserialize message
         let message = this.toMessage(msg)
         if (message == null) {
@@ -257,7 +263,30 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
         this._counters.incrementOne("queue." + this.getName() + ".received_messages");
         this._logger.debug(message.correlation_id, "Received message %s via %s", message, this.getName());
 
-        this._messages.push(message);
+        // Send message to receiver if its set or put it into the queue
+        if (this._receiver != null) {
+            this.sendMessageToReceiver(this._receiver, message);
+        } else {
+            this._messages.push(message);
+        }
+    }
+
+    private sendMessageToReceiver(receiver: IMessageReceiver, message: MessageEnvelope): void {
+        let correlationId = message != null ? message.correlation_id : null;
+        if (message == null || receiver == null) {
+            this._logger.warn(correlationId, "NATS message was skipped.");
+            return;
+        }
+
+        try {
+            this._receiver.receiveMessage(message, this, (err) => {
+                if (err != null) {
+                    this._logger.error(correlationId, err, "Failed to process the message");
+                }
+            });
+        } catch (err) {
+            this._logger.error(correlationId, err, "Failed to process the message");
+        }
     }
 
     /**
@@ -272,41 +301,23 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
     public listen(correlationId: string, receiver: IMessageReceiver): void {
         this._logger.trace(null, "Started listening messages at %s", this.getName());
 
-        // Unset cancellation token
-        this._cancel = false;
-
-        // Pass all cached messages
+        // Resend collected messages to receiver
         async.whilst(
             () => {
-                return this._client && !this._cancel;
+                return this.isOpen() && this._messages.length > 0;
             },
-            (callback) => {
-                this.receive(correlationId, 1000, (err, message) => {
-                    if (err != null) {
-                        this._logger.error(correlationId, err, "Failed to receive the message");
-                        callback();
-                        return;
-                    }
-
-                    if (message != null && !this._cancel) {
-                        try {
-                            receiver.receiveMessage(message, this, (err) => {
-                                if (err != null) {
-                                    this._logger.error(correlationId, err, "Failed to process the message");
-                                }            
-                                callback();
-                            });
-                        } catch (err) {
-                            this._logger.error(correlationId, err, "Failed to process the message");
-                            callback();
-                        }
-                    } else {
-                        callback();
-                    }
-                });
+            (whilstCallback) => {
+                let message = this._messages.shift();
+                if (message != null) {
+                    this.sendMessageToReceiver(receiver, message);
+                }
+                whilstCallback();
             },
             (err) => {
-                // Do nothing...
+                // Set the receiver
+                if (this.isOpen()) {
+                    this._receiver = receiver;
+                }
             }
         );
     }
@@ -318,7 +329,7 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
      * @param correlationId     (optional) transaction id to trace execution through call chain.
      */
     public endListen(correlationId: string): void {
-        this._cancel = true;
+        this._receiver = null;
     }
 
 }

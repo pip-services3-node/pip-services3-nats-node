@@ -8,10 +8,13 @@ import { IConfigurable } from 'pip-services3-commons-node';
 import { IOpenable } from 'pip-services3-commons-node';
 import { ConfigParams } from 'pip-services3-commons-node';
 import { ConnectionException } from 'pip-services3-commons-node';
+import { InvalidStateException } from 'pip-services3-commons-node';
 import { CompositeLogger } from 'pip-services3-components-node';
 import { IMessageQueueConnection } from 'pip-services3-messaging-node';
 
 import { NatsConnectionResolver } from './NatsConnectionResolver';
+import { INatsMessageListener } from './INatsMessageListener';
+import { NatsSubscription } from './NatsSubscription';
 
 /**
  * NATS connection using plain driver.
@@ -74,10 +77,15 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
      */
     protected _connection: any;
 
-    private _retryConnect: boolean = true;
-    private _maxReconnect: number = 3;
-    private _reconnectTimeout: number = 3000;
-    private _flushTimeout: number = 3000;
+    /**
+     * Topic subscriptions
+     */
+    protected _subscriptions: NatsSubscription[] = [];
+
+    protected _retryConnect: boolean = true;
+    protected _maxReconnect: number = 3;
+    protected _reconnectTimeout: number = 3000;
+    protected _flushTimeout: number = 3000;
 
     /**
      * Creates a new instance of the connection component.
@@ -191,17 +199,11 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
             return;
         }
 
-        this._connection.close()
-        .then(() => {
-            this._connection = null;
-            this._logger.debug(correlationId, "Disconnected from NATS server");
-            if (callback) callback(null);
-        })
-        .catch((err) => {
-            this._connection = null;
-            err = new ConnectionException(correlationId, 'DISCONNECT_FAILED', 'Disconnect from NATS service failed: ') .withCause(err);
-            if (callback) callback(err);
-        });
+        this._connection.close();
+        this._connection = null;
+        this._subscriptions = [];
+        this._logger.debug(correlationId, "Disconnected from NATS server");
+        if (callback) callback(null);
     }
 
     public getConnection(): any {
@@ -216,4 +218,106 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
     public getQueueNames(): string[] {
         return [];
     }
+
+    /**
+     * Checks if connection is open
+     * @returns an error is connection is closed or <code>null<code> otherwise.
+     */
+     protected checkOpen(): any {
+        if (this.isOpen()) return null;
+
+        return new InvalidStateException(
+            null,
+            "NOT_OPEN",
+            "Connection was not opened"
+        );
+    }    
+
+    /**
+     * Publish a message to a specified topic
+     * @param subject a subject(topic) where the message will be placed
+     * @param message a message to be published
+     * @param callback (optional) callback to receive notification on operation result
+     */
+     public publish(subject: string, message: any, callback?: (err: any) => void): void {
+        // Check for open connection
+        let err = this.checkOpen();
+        if (err) {
+            if (callback) callback(err);
+            return;
+        }
+
+        subject = subject || message.subject;
+        this._connection.publish(subject, message.data, { headers: message.headers });
+        if (callback) callback(null)
+    }
+
+    /**
+     * Subscribe to a topic
+     * @param subject a subject(topic) name
+     * @param options subscription options
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+     public subscribe(subject: string, options: any, listener: INatsMessageListener,
+        callback?: (err: any) => void): void {
+        // Check for open connection
+        let err = this.checkOpen();
+        if (err != null) {
+            if (callback) callback(err);
+            return;
+        }
+
+        // Subscribe to topic
+        let handler = this._connection.subscribe(
+            subject, 
+            {
+                max: options.max,
+                timeout: options.timeout,
+                queue: options.queue,
+                callback: (err, message) => {                    
+                    listener.onMessage(err, message);
+                }
+            }
+        );
+
+        // Determine if messages shall be filtered (topic without wildcarts)
+        let filter = subject.indexOf("*") < 0;
+
+        // Add the subscription
+        let subscription = <NatsSubscription>{
+            subject: subject,
+            options: options,
+            filter: filter,
+            handler: handler,
+            listener: listener
+        };
+        this._subscriptions.push(subscription);
+        if (callback) callback(null);
+    }
+
+    /**
+     * Unsubscribe from a previously subscribed topic
+     * @param subject a subject(topic) name
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    public unsubscribe(subject: string, listener: INatsMessageListener, callback?: (err: any) => void): void {
+        // Find the subscription index
+        let index = this._subscriptions.findIndex((s) => s.subject == subject && s.listener == listener);
+        if (index < 0) {
+            if (callback) callback(null);
+            return;
+        }
+        
+        // Remove the subscription
+        let subscription = this._subscriptions.splice(index, 1)[0];
+
+        // Unsubscribe from the topic
+        if (this.isOpen() && subscription.handler != null) {
+            subscription.handler.unsubscribe();
+        }
+
+        if (callback) callback(null);
+    }    
 }

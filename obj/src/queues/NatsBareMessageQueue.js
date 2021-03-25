@@ -110,7 +110,7 @@ class NatsBareMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessag
             callback(err, null);
             return;
         }
-        this._client.subscribe(this.getSubscriptionSubject(), {
+        this._client.subscribe(this.getSubject(), {
             max: 1,
             timeout: waitTimeout,
             callback: (err, msg) => {
@@ -161,7 +161,7 @@ class NatsBareMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessag
         if (err != null) {
             throw err;
         }
-        this._client.subscribe(this.getSubscriptionSubject(), {
+        this._client.subscribe(this.getSubject(), {
             queue: this._queueGroup,
             callback: (err, msg) => {
                 if (err != null) {

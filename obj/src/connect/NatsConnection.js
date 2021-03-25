@@ -6,6 +6,7 @@ const _ = require('lodash');
 const nats = require('nats');
 const pip_services3_commons_node_1 = require("pip-services3-commons-node");
 const pip_services3_commons_node_2 = require("pip-services3-commons-node");
+const pip_services3_commons_node_3 = require("pip-services3-commons-node");
 const pip_services3_components_node_1 = require("pip-services3-components-node");
 const NatsConnectionResolver_1 = require("./NatsConnectionResolver");
 /**
@@ -59,6 +60,10 @@ class NatsConnection {
          * The configuration options.
          */
         this._options = new pip_services3_commons_node_1.ConfigParams();
+        /**
+         * Topic subscriptions
+         */
+        this._subscriptions = [];
         this._retryConnect = true;
         this._maxReconnect = 3;
         this._reconnectTimeout = 3000;
@@ -168,19 +173,12 @@ class NatsConnection {
                 callback(null);
             return;
         }
-        this._connection.close()
-            .then(() => {
-            this._connection = null;
-            this._logger.debug(correlationId, "Disconnected from NATS server");
-            if (callback)
-                callback(null);
-        })
-            .catch((err) => {
-            this._connection = null;
-            err = new pip_services3_commons_node_2.ConnectionException(correlationId, 'DISCONNECT_FAILED', 'Disconnect from NATS service failed: ').withCause(err);
-            if (callback)
-                callback(err);
-        });
+        this._connection.close();
+        this._connection = null;
+        this._subscriptions = [];
+        this._logger.debug(correlationId, "Disconnected from NATS server");
+        if (callback)
+            callback(null);
     }
     getConnection() {
         return this._connection;
@@ -192,6 +190,95 @@ class NatsConnection {
      */
     getQueueNames() {
         return [];
+    }
+    /**
+     * Checks if connection is open
+     * @returns an error is connection is closed or <code>null<code> otherwise.
+     */
+    checkOpen() {
+        if (this.isOpen())
+            return null;
+        return new pip_services3_commons_node_3.InvalidStateException(null, "NOT_OPEN", "Connection was not opened");
+    }
+    /**
+     * Publish a message to a specified topic
+     * @param subject a subject(topic) where the message will be placed
+     * @param message a message to be published
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    publish(subject, message, callback) {
+        // Check for open connection
+        let err = this.checkOpen();
+        if (err) {
+            if (callback)
+                callback(err);
+            return;
+        }
+        subject = subject || message.subject;
+        this._connection.publish(subject, message.data, { headers: message.headers });
+        if (callback)
+            callback(null);
+    }
+    /**
+     * Subscribe to a topic
+     * @param subject a subject(topic) name
+     * @param options subscription options
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    subscribe(subject, options, listener, callback) {
+        // Check for open connection
+        let err = this.checkOpen();
+        if (err != null) {
+            if (callback)
+                callback(err);
+            return;
+        }
+        // Subscribe to topic
+        let handler = this._connection.subscribe(subject, {
+            max: options.max,
+            timeout: options.timeout,
+            queue: options.queue,
+            callback: (err, message) => {
+                listener.onMessage(err, message);
+            }
+        });
+        // Determine if messages shall be filtered (topic without wildcarts)
+        let filter = subject.indexOf("*") < 0;
+        // Add the subscription
+        let subscription = {
+            subject: subject,
+            options: options,
+            filter: filter,
+            handler: handler,
+            listener: listener
+        };
+        this._subscriptions.push(subscription);
+        if (callback)
+            callback(null);
+    }
+    /**
+     * Unsubscribe from a previously subscribed topic
+     * @param subject a subject(topic) name
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    unsubscribe(subject, listener, callback) {
+        // Find the subscription index
+        let index = this._subscriptions.findIndex((s) => s.subject == subject && s.listener == listener);
+        if (index < 0) {
+            if (callback)
+                callback(null);
+            return;
+        }
+        // Remove the subscription
+        let subscription = this._subscriptions.splice(index, 1)[0];
+        // Unsubscribe from the topic
+        if (this.isOpen() && subscription.handler != null) {
+            subscription.handler.unsubscribe();
+        }
+        if (callback)
+            callback(null);
     }
 }
 exports.NatsConnection = NatsConnection;

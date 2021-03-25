@@ -93,7 +93,7 @@ export declare abstract class NatsAbstractMessageQueue extends MessageQueue impl
      * @param callback 			callback function that receives error or null no errors occured.
      */
     close(correlationId: string, callback?: (err: any) => void): void;
-    protected getSubscriptionSubject(): string;
+    protected getSubject(): string;
     protected fromMessage(message: MessageEnvelope): any;
     protected toMessage(msg: any): MessageEnvelope;
     /**

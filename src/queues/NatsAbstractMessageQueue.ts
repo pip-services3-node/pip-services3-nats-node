@@ -234,7 +234,7 @@ export abstract class NatsAbstractMessageQueue extends MessageQueue implements I
         }
     }
 
-    protected getSubscriptionSubject(): string {
+    protected getSubject(): string {
         return this._subject != null && this._subject != "" ? this._subject : this._name;
     }
 
@@ -249,7 +249,6 @@ export abstract class NatsAbstractMessageQueue extends MessageQueue implements I
         headers.append("sent_time", StringConverter.toNullableString(message.sent_time || new Date()));
 
         return {
-            subject: this.getName(),
             data: data,
             headers: headers
         };
@@ -302,18 +301,10 @@ export abstract class NatsAbstractMessageQueue extends MessageQueue implements I
             return;
         }
 
+        let subject = this.getName() || this._subject;
         let msg = this.fromMessage(message);
 
-        this._client.publish(msg.subject, msg.data, { headers: msg.headers })
-        // .then(() => {
-            this._counters.incrementOne("queue." + this.getName() + ".sent_messages");
-            this._logger.debug(message.correlation_id, "Sent message %s via %s", message.toString(), this.toString());
-            if (callback) callback(null);
-        // })
-        // .catch((err) => {
-        //     this._logger.error(message.correlation_id, err, "Failed to send message via %s", this.getName());
-        //     if (callback) callback(err);    
-        // });
+        this._connection.publish(subject, msg, callback);
     }
 
     /**

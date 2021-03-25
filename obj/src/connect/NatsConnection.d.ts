@@ -6,6 +6,8 @@ import { ConfigParams } from 'pip-services3-commons-node';
 import { CompositeLogger } from 'pip-services3-components-node';
 import { IMessageQueueConnection } from 'pip-services3-messaging-node';
 import { NatsConnectionResolver } from './NatsConnectionResolver';
+import { INatsMessageListener } from './INatsMessageListener';
+import { NatsSubscription } from './NatsSubscription';
 /**
  * NATS connection using plain driver.
  *
@@ -54,10 +56,14 @@ export declare class NatsConnection implements IMessageQueueConnection, IReferen
      * The NATS connection pool object.
      */
     protected _connection: any;
-    private _retryConnect;
-    private _maxReconnect;
-    private _reconnectTimeout;
-    private _flushTimeout;
+    /**
+     * Topic subscriptions
+     */
+    protected _subscriptions: NatsSubscription[];
+    protected _retryConnect: boolean;
+    protected _maxReconnect: number;
+    protected _reconnectTimeout: number;
+    protected _flushTimeout: number;
     /**
      * Creates a new instance of the connection component.
      */
@@ -101,4 +107,31 @@ export declare class NatsConnection implements IMessageQueueConnection, IReferen
      * @returns a list with registered queue names.
      */
     getQueueNames(): string[];
+    /**
+     * Checks if connection is open
+     * @returns an error is connection is closed or <code>null<code> otherwise.
+     */
+    protected checkOpen(): any;
+    /**
+     * Publish a message to a specified topic
+     * @param subject a subject(topic) where the message will be placed
+     * @param message a message to be published
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    publish(subject: string, message: any, callback?: (err: any) => void): void;
+    /**
+     * Subscribe to a topic
+     * @param subject a subject(topic) name
+     * @param options subscription options
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    subscribe(subject: string, options: any, listener: INatsMessageListener, callback?: (err: any) => void): void;
+    /**
+     * Unsubscribe from a previously subscribed topic
+     * @param subject a subject(topic) name
+     * @param listener a message listener
+     * @param callback (optional) callback to receive notification on operation result
+     */
+    unsubscribe(subject: string, listener: INatsMessageListener, callback?: (err: any) => void): void;
 }

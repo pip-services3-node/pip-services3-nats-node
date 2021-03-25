@@ -126,7 +126,7 @@ export class NatsBareMessageQueue extends NatsAbstractMessageQueue {
         }
         
         this._client.subscribe(
-            this.getSubscriptionSubject(),
+            this.getSubject(),
             {
                 max: 1,
                 timeout: waitTimeout,
@@ -187,7 +187,7 @@ export class NatsBareMessageQueue extends NatsAbstractMessageQueue {
         }
 
         this._client.subscribe(
-            this.getSubscriptionSubject(),
+            this.getSubject(),
             { 
                 queue: this._queueGroup,
                 callback: (err, msg) => {
