@@ -8,6 +8,7 @@ Initial public release
 * **build** - factory default implementation
 * **connect** - components for setting up the connection to the NATS broker
 * **queues** - components of working with a message queue via the NATS protocol
+* **queues** - Added autosubscribe option
 
 ### Bug Fixes
 No fixes in this version

@@ -62,7 +62,7 @@ import { NatsAbstractMessageQueue } from './NatsAbstractMessageQueue';
  */
 export declare class NatsMessageQueue extends NatsAbstractMessageQueue {
     protected _autoSubscribe: boolean;
-    protected _subscribe: boolean;
+    protected _subscribed: boolean;
     protected _messages: MessageEnvelope[];
     protected _receiver: IMessageReceiver;
     /**
@@ -98,6 +98,7 @@ export declare class NatsMessageQueue extends NatsAbstractMessageQueue {
      * @param callback 			callback function that receives error or null no errors occured.
      */
     clear(correlationId: string, callback: (err?: any) => void): void;
+    protected subscribe(correlationId: string, callback: (err: any) => void): void;
     /**
      * Reads the current number of messages in the queue to be delivered.
      *

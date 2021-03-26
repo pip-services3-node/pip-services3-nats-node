@@ -16,7 +16,7 @@ suite('NatsMessageQueue', () => {
     let brokerUser = process.env['NATS_USER'];
     let brokerPass = process.env['NATS_PASS'];
     let brokerToken = process.env['NATS_TOKEN'];
-    let queueConfig = pip_services3_commons_node_1.ConfigParams.fromTuples('queue', brokerQueue, 'connection.protocol', 'nats', 'connection.host', brokerHost, 'connection.port', brokerPort, 'credential.username', brokerUser, 'credential.password', brokerPass, 'credential.token', brokerToken);
+    let queueConfig = pip_services3_commons_node_1.ConfigParams.fromTuples('queue', brokerQueue, 'connection.protocol', 'nats', 'connection.host', brokerHost, 'connection.port', brokerPort, 'credential.username', brokerUser, 'credential.password', brokerPass, 'credential.token', brokerToken, 'options.autosubscribe', true);
     setup((done) => {
         queue = new NatsMessageQueue_1.NatsMessageQueue(brokerQueue);
         queue.configure(queueConfig);

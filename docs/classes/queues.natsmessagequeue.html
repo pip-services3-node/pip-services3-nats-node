@@ -91,6 +91,7 @@
 						</li>
 						<li>options:<ul>
 								<li>serialize_message:    (optional) true to serialize entire message as JSON, false to send only message payload (default: true)</li>
+								<li>autosubscribe:        (optional) true to automatically subscribe on option (default: false)</li>
 								<li>retry_connect:        (optional) turns on/off automated reconnect when connection is log (default: true)</li>
 								<li>max_reconnect:        (optional) maximum reconnection attempts (default: 3)</li>
 								<li>reconnect_timeout:    (optional) number of milliseconds to wait on each reconnection attempt (default: 3000)</li>
@@ -173,6 +174,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<section class="tsd-index-section tsd-is-private-protected">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><a href="queues.natsmessagequeue.html#_autosubscribe" class="tsd-kind-icon">_auto<wbr>Subscribe</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#_client" class="tsd-kind-icon">_client</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#_connection" class="tsd-kind-icon">_connection</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#_dependencyresolver" class="tsd-kind-icon">_dependency<wbr>Resolver</a></li>
@@ -182,6 +184,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><a href="queues.natsmessagequeue.html#_receiver" class="tsd-kind-icon">_receiver</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#_serializeenvelop" class="tsd-kind-icon">_serialize<wbr>Envelop</a></li>
 								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#_subject" class="tsd-kind-icon">_subject</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><a href="queues.natsmessagequeue.html#_subscribed" class="tsd-kind-icon">_subscribed</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -191,7 +194,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="queues.natsmessagequeue.html#clear" class="tsd-kind-icon">clear</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="queues.natsmessagequeue.html#close" class="tsd-kind-icon">close</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#complete" class="tsd-kind-icon">complete</a></li>
-								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#configure" class="tsd-kind-icon">configure</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-overwrite"><a href="queues.natsmessagequeue.html#configure" class="tsd-kind-icon">configure</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="queues.natsmessagequeue.html#endlisten" class="tsd-kind-icon">end<wbr>Listen</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#frommessage" class="tsd-kind-icon">from<wbr>Message</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#getsubject" class="tsd-kind-icon">get<wbr>Subject</a></li>
@@ -207,6 +210,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#renewlock" class="tsd-kind-icon">renew<wbr>Lock</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#send" class="tsd-kind-icon">send</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#setreferences" class="tsd-kind-icon">set<wbr>References</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><a href="queues.natsmessagequeue.html#subscribe" class="tsd-kind-icon">subscribe</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected"><a href="queues.natsmessagequeue.html#tomessage" class="tsd-kind-icon">to<wbr>Message</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="queues.natsmessagequeue.html#unsetreferences" class="tsd-kind-icon">unset<wbr>References</a></li>
 							</ul>
@@ -227,7 +231,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<aside class="tsd-sources">
 								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#constructor">constructor</a></p>
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:70</li>
+									<li>Defined in queues/NatsMessageQueue.ts:74</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -253,6 +257,16 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 			</section>
 			<section class="tsd-panel-group tsd-member-group tsd-is-private-protected">
 				<h2>Properties</h2>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-protected">
+					<a name="_autosubscribe" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> _auto<wbr>Subscribe</h3>
+					<div class="tsd-signature tsd-kind-icon">_auto<wbr>Subscribe<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in queues/NatsMessageQueue.ts:71</li>
+						</ul>
+					</aside>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
 					<a name="_client" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagProtected">Protected</span> _client</h3>
@@ -323,7 +337,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 					<div class="tsd-signature tsd-kind-icon">_messages<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">MessageEnvelope</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> =&nbsp;[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in queues/NatsMessageQueue.ts:69</li>
+							<li>Defined in queues/NatsMessageQueue.ts:73</li>
 						</ul>
 					</aside>
 				</section>
@@ -344,7 +358,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 					<div class="tsd-signature tsd-kind-icon">_receiver<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">IMessageReceiver</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in queues/NatsMessageQueue.ts:70</li>
+							<li>Defined in queues/NatsMessageQueue.ts:74</li>
 						</ul>
 					</aside>
 				</section>
@@ -367,6 +381,16 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<p>Inherited from <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#_subject">_subject</a></p>
 						<ul>
 							<li>Defined in queues/NatsAbstractMessageQueue.ts:69</li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class tsd-is-protected">
+					<a name="_subscribed" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> _subscribed</h3>
+					<div class="tsd-signature tsd-kind-icon">_subscribed<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in queues/NatsMessageQueue.ts:72</li>
 						</ul>
 					</aside>
 				</section>
@@ -444,7 +468,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<aside class="tsd-sources">
 								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#clear">clear</a></p>
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:148</li>
+									<li>Defined in queues/NatsMessageQueue.ts:163</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -500,7 +524,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<aside class="tsd-sources">
 								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#close">close</a></p>
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:124</li>
+									<li>Defined in queues/NatsMessageQueue.ts:136</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -603,18 +627,18 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
 					<a name="configure" class="tsd-anchor"></a>
 					<h3>configure</h3>
-					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
 						<li class="tsd-signature tsd-kind-icon">configure<span class="tsd-signature-symbol">(</span>config<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">ConfigParams</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
-								<p>Inherited from <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#configure">configure</a></p>
+								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#configure">configure</a></p>
 								<ul>
-									<li>Defined in queues/NatsAbstractMessageQueue.ts:86</li>
+									<li>Defined in queues/NatsMessageQueue.ts:90</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -645,7 +669,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:331</li>
+									<li>Defined in queues/NatsMessageQueue.ts:413</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -743,7 +767,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:301</li>
+									<li>Defined in queues/NatsMessageQueue.ts:371</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -845,7 +869,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:250</li>
+									<li>Defined in queues/NatsMessageQueue.ts:320</li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -872,7 +896,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<aside class="tsd-sources">
 								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#open">open</a></p>
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:87</li>
+									<li>Defined in queues/NatsMessageQueue.ts:102</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -927,7 +951,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:169</li>
+									<li>Defined in queues/NatsMessageQueue.ts:207</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -986,7 +1010,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:198</li>
+									<li>Defined in queues/NatsMessageQueue.ts:245</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1053,7 +1077,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<aside class="tsd-sources">
 								<p>Overrides <a href="queues.natsabstractmessagequeue.html">NatsAbstractMessageQueue</a>.<a href="queues.natsabstractmessagequeue.html#readmessagecount">readMessageCount</a></p>
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:158</li>
+									<li>Defined in queues/NatsMessageQueue.ts:196</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1105,7 +1129,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in queues/NatsMessageQueue.ts:219</li>
+									<li>Defined in queues/NatsMessageQueue.ts:275</li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1317,6 +1341,50 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 						</li>
 					</ul>
 				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+					<a name="subscribe" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagProtected">Protected</span> subscribe</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+						<li class="tsd-signature tsd-kind-icon">subscribe<span class="tsd-signature-symbol">(</span>correlationId<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, callback<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">function</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in queues/NatsMessageQueue.ts:168</li>
+								</ul>
+							</aside>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5>correlationId: <span class="tsd-signature-type">string</span></h5>
+								</li>
+								<li>
+									<h5>callback: <span class="tsd-signature-type">function</span></h5>
+									<ul class="tsd-parameters">
+										<li class="tsd-parameter-siganture">
+											<ul class="tsd-signatures tsd-kind-type-literal tsd-is-not-exported">
+												<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>err<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+											</ul>
+											<ul class="tsd-descriptions">
+												<li class="tsd-description">
+													<h4 class="tsd-parameters-title">Parameters</h4>
+													<ul class="tsd-parameters">
+														<li>
+															<h5>err: <span class="tsd-signature-type">any</span></h5>
+														</li>
+													</ul>
+													<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+												</li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
+				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
 					<a name="tomessage" class="tsd-anchor"></a>
 					<h3><span class="tsd-flag ts-flagProtected">Protected</span> to<wbr>Message</h3>
@@ -1408,6 +1476,9 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<li class=" tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
 								<a href="queues.natsmessagequeue.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-protected">
+								<a href="queues.natsmessagequeue.html#_autosubscribe" class="tsd-kind-icon">_auto<wbr>Subscribe</a>
+							</li>
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
 								<a href="queues.natsmessagequeue.html#_client" class="tsd-kind-icon">_client</a>
 							</li>
@@ -1435,6 +1506,9 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
 								<a href="queues.natsmessagequeue.html#_subject" class="tsd-kind-icon">_subject</a>
 							</li>
+							<li class=" tsd-kind-property tsd-parent-kind-class tsd-is-protected">
+								<a href="queues.natsmessagequeue.html#_subscribed" class="tsd-kind-icon">_subscribed</a>
+							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="queues.natsmessagequeue.html#abandon" class="tsd-kind-icon">abandon</a>
 							</li>
@@ -1447,7 +1521,7 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="queues.natsmessagequeue.html#complete" class="tsd-kind-icon">complete</a>
 							</li>
-							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-overwrite">
 								<a href="queues.natsmessagequeue.html#configure" class="tsd-kind-icon">configure</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
@@ -1494,6 +1568,9 @@ queue.receive(<span class="hljs-string">"123"</span>, (err, message) =&gt; {
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="queues.natsmessagequeue.html#setreferences" class="tsd-kind-icon">set<wbr>References</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-protected">
+								<a href="queues.natsmessagequeue.html#subscribe" class="tsd-kind-icon">subscribe</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited tsd-is-protected">
 								<a href="queues.natsmessagequeue.html#tomessage" class="tsd-kind-icon">to<wbr>Message</a>

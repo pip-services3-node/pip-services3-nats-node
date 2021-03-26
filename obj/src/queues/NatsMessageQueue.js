@@ -102,16 +102,21 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
                 return;
             }
             // Subscribe right away
-            let subject = this.getSubject();
-            this._connection.subscribe(subject, { group: this._queueGroup }, this, (err) => {
-                if (err != null) {
-                    this._logger.error(correlationId, err, "Failed to subscribe to topic " + subject);
-                    this.close(correlationId, callback);
-                    return;
-                }
+            if (this._autoSubscribe) {
+                this.subscribe(correlationId, (err) => {
+                    if (err != null) {
+                        this.close(correlationId, callback);
+                    }
+                    else {
+                        if (callback)
+                            callback(err);
+                    }
+                });
+            }
+            else {
                 if (callback)
-                    callback(err);
-            });
+                    callback(null);
+            }
         });
     }
     /**
@@ -127,8 +132,11 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
             return;
         }
         // Unsubscribe from the topic
-        let subject = this.getSubject();
-        this._connection.unsubscribe(subject, this);
+        if (this._subscribed) {
+            let subject = this.getSubject();
+            this._connection.unsubscribe(subject, this);
+            this._subscribed = false;
+        }
         super.close(correlationId, (err) => {
             this._messages = [];
             this._receiver = null;
@@ -145,6 +153,25 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
     clear(correlationId, callback) {
         this._messages = [];
         callback();
+    }
+    subscribe(correlationId, callback) {
+        if (this._subscribed) {
+            if (callback)
+                callback(null);
+            return;
+        }
+        // Subscribe right away
+        let subject = this.getSubject();
+        this._connection.subscribe(subject, { group: this._queueGroup }, this, (err) => {
+            if (err != null) {
+                this._logger.error(correlationId, err, "Failed to subscribe to subject " + subject);
+            }
+            else {
+                this._subscribed = true;
+            }
+            if (callback)
+                callback(err);
+        });
     }
     /**
      * Reads the current number of messages in the queue to be delivered.
@@ -167,14 +194,22 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
             callback(err, null);
             return;
         }
-        let message = null;
-        if (this._messages.length > 0) {
-            message = this._messages[0];
-        }
-        if (message != null) {
-            this._logger.trace(message.correlation_id, "Peeked message %s on %s", message, this.getName());
-        }
-        callback(null, message);
+        // Subscribe to topic if needed
+        this.subscribe(correlationId, (err) => {
+            if (err != null) {
+                callback(err, null);
+                return;
+            }
+            // Peek a message from the top
+            let message = null;
+            if (this._messages.length > 0) {
+                message = this._messages[0];
+            }
+            if (message != null) {
+                this._logger.trace(message.correlation_id, "Peeked message %s on %s", message, this.getName());
+            }
+            callback(null, message);
+        });
     }
     /**
      * Peeks multiple incoming messages from the queue without removing them.
@@ -192,9 +227,17 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
             callback(err, null);
             return;
         }
-        let messages = this._messages.slice(0, messageCount);
-        this._logger.trace(correlationId, "Peeked %d messages on %s", messages.length, this.getName());
-        callback(null, messages);
+        // Subscribe to topic if needed
+        this.subscribe(correlationId, (err) => {
+            if (err != null) {
+                callback(err, null);
+                return;
+            }
+            // Peek a batch of messages
+            let messages = this._messages.slice(0, messageCount);
+            this._logger.trace(correlationId, "Peeked %d messages on %s", messages.length, this.getName());
+            callback(null, messages);
+        });
     }
     /**
      * Receives an incoming message and removes it from the queue.
@@ -204,26 +247,38 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
      * @param callback          callback function that receives a message or error.
      */
     receive(correlationId, waitTimeout, callback) {
-        let message = null;
-        // Return message immediately if it exist
-        if (this._messages.length > 0) {
-            message = this._messages.shift();
-            callback(null, message);
+        let err = this.checkOpen(correlationId);
+        if (err != null) {
+            callback(err, null);
             return;
         }
-        // Otherwise wait and return
-        let checkInterval = 100;
-        let elapsedTime = 0;
-        async.whilst(() => {
-            return this._client && elapsedTime < waitTimeout && message == null;
-        }, (whilstCallback) => {
-            elapsedTime += checkInterval;
-            setTimeout(() => {
+        // Subscribe to topic if needed
+        this.subscribe(correlationId, (err) => {
+            if (err != null) {
+                callback(err, null);
+                return;
+            }
+            let message = null;
+            // Return message immediately if it exist
+            if (this._messages.length > 0) {
                 message = this._messages.shift();
-                whilstCallback();
-            }, checkInterval);
-        }, (err) => {
-            callback(err, message);
+                callback(null, message);
+                return;
+            }
+            // Otherwise wait and return
+            let checkInterval = 100;
+            let elapsedTime = 0;
+            async.whilst(() => {
+                return this.isOpen() && elapsedTime < waitTimeout && message == null;
+            }, (whilstCallback) => {
+                elapsedTime += checkInterval;
+                setTimeout(() => {
+                    message = this._messages.shift();
+                    whilstCallback();
+                }, checkInterval);
+            }, (err) => {
+                callback(err, message);
+            });
         });
     }
     onMessage(err, msg) {
@@ -274,21 +329,31 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
      * @see [[receive]]
      */
     listen(correlationId, receiver) {
-        this._logger.trace(null, "Started listening messages at %s", this.getName());
-        // Resend collected messages to receiver
-        async.whilst(() => {
-            return this.isOpen() && this._messages.length > 0;
-        }, (whilstCallback) => {
-            let message = this._messages.shift();
-            if (message != null) {
-                this.sendMessageToReceiver(receiver, message);
+        let err = this.checkOpen(correlationId);
+        if (err != null) {
+            return;
+        }
+        // Subscribe to topic if needed
+        this.subscribe(correlationId, (err) => {
+            if (err != null) {
+                return;
             }
-            whilstCallback();
-        }, (err) => {
-            // Set the receiver
-            if (this.isOpen()) {
-                this._receiver = receiver;
-            }
+            this._logger.trace(null, "Started listening messages at %s", this.getName());
+            // Resend collected messages to receiver
+            async.whilst(() => {
+                return this.isOpen() && this._messages.length > 0;
+            }, (whilstCallback) => {
+                let message = this._messages.shift();
+                if (message != null) {
+                    this.sendMessageToReceiver(receiver, message);
+                }
+                whilstCallback();
+            }, (err) => {
+                // Set the receiver
+                if (this.isOpen()) {
+                    this._receiver = receiver;
+                }
+            });
         });
     }
     /**

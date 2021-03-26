@@ -27,6 +27,7 @@ suite('NatsMessageQueue', ()=> {
         'credential.username', brokerUser,
         'credential.password', brokerPass,
         'credential.token', brokerToken,
+        'options.autosubscribe', true
     );        
 
     setup((done) => {
