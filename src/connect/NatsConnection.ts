@@ -157,7 +157,7 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
                 servers = servers.split(",");
                 options["servers"] = servers;
 
-                let username = config.getAsString("usernames");
+                let username = config.getAsString("username");
                 let password = config.getAsString("password");
                 if (username != null) {
                     options["username"] = username;
