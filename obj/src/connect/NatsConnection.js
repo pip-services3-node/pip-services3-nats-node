@@ -3,7 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.NatsConnection = void 0;
 /** @module connect */
 const _ = require('lodash');
+/** @hidden */
 const nats = require('nats');
+/** @hidden */
+const os = require('os');
 const pip_services3_commons_node_1 = require("pip-services3-commons-node");
 const pip_services3_commons_node_2 = require("pip-services3-commons-node");
 const pip_services3_commons_node_3 = require("pip-services3-commons-node");
@@ -17,6 +20,7 @@ const NatsConnectionResolver_1 = require("./NatsConnectionResolver");
  *
  * ### Configuration parameters ###
  *
+ * - client_id:               (optional) name of the client id
  * - connection(s):
  *   - discovery_key:             (optional) a key to retrieve the connection from [[https://pip-services3-node.github.io/pip-services3-components-node/interfaces/connect.idiscovery.html IDiscovery]]
  *   - host:                      host name or IP address
@@ -47,7 +51,7 @@ class NatsConnection {
         this._defaultConfig = pip_services3_commons_node_1.ConfigParams.fromTuples(
         // connections.*
         // credential.*
-        "options.retry_connect", true, "options.connect_timeout", 0, "options.reconnect_timeout", 3000, "options.max_reconnect", 3, "options.flush_timeout", 3000);
+        "client_id", null, "options.retry_connect", true, "options.connect_timeout", 0, "options.reconnect_timeout", 3000, "options.max_reconnect", 3, "options.flush_timeout", 3000);
         /**
          * The logger.
          */
@@ -64,6 +68,7 @@ class NatsConnection {
          * Topic subscriptions
          */
         this._subscriptions = [];
+        this._clientId = os.hostname();
         this._retryConnect = true;
         this._maxReconnect = 3;
         this._reconnectTimeout = 3000;
@@ -78,6 +83,7 @@ class NatsConnection {
         config = config.setDefaults(this._defaultConfig);
         this._connectionResolver.configure(config);
         this._options = this._options.override(config.getSection("options"));
+        this._clientId = config.getAsStringWithDefault("client_id", this._clientId);
         this._retryConnect = config.getAsBooleanWithDefault("options.retry_connect", this._retryConnect);
         this._maxReconnect = config.getAsIntegerWithDefault("options.max_reconnect", this._maxReconnect);
         this._reconnectTimeout = config.getAsIntegerWithDefault("options.reconnect_timeout", this._reconnectTimeout);
@@ -122,6 +128,7 @@ class NatsConnection {
             }
             try {
                 let options = {
+                    "name": this._clientId,
                     "reconnect": this._retryConnect,
                     "maxReconnectAttempts": this._maxReconnect,
                     "reconnectTimeWait": this._reconnectTimeout

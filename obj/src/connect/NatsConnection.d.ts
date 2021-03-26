@@ -16,6 +16,7 @@ import { NatsSubscription } from './NatsSubscription';
  *
  * ### Configuration parameters ###
  *
+ * - client_id:               (optional) name of the client id
  * - connection(s):
  *   - discovery_key:             (optional) a key to retrieve the connection from [[https://pip-services3-node.github.io/pip-services3-components-node/interfaces/connect.idiscovery.html IDiscovery]]
  *   - host:                      host name or IP address
@@ -60,6 +61,7 @@ export declare class NatsConnection implements IMessageQueueConnection, IReferen
      * Topic subscriptions
      */
     protected _subscriptions: NatsSubscription[];
+    protected _clientId: string;
     protected _retryConnect: boolean;
     protected _maxReconnect: number;
     protected _reconnectTimeout: number;

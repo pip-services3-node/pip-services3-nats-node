@@ -1,6 +1,9 @@
 /** @module connect */
 const _ = require('lodash');
+/** @hidden */
 const nats = require('nats');
+/** @hidden */
+const os = require('os');
 
 import { IReferenceable } from 'pip-services3-commons-node';
 import { IReferences } from 'pip-services3-commons-node';
@@ -24,6 +27,7 @@ import { NatsSubscription } from './NatsSubscription';
  * 
  * ### Configuration parameters ###
  * 
+ * - client_id:               (optional) name of the client id
  * - connection(s):    
  *   - discovery_key:             (optional) a key to retrieve the connection from [[https://pip-services3-node.github.io/pip-services3-components-node/interfaces/connect.idiscovery.html IDiscovery]]
  *   - host:                      host name or IP address
@@ -52,6 +56,7 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
         // connections.*
         // credential.*
 
+        "client_id", null,
         "options.retry_connect", true,
         "options.connect_timeout", 0,
         "options.reconnect_timeout", 3000,
@@ -82,6 +87,7 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
      */
     protected _subscriptions: NatsSubscription[] = [];
 
+    protected _clientId: string = os.hostname();
     protected _retryConnect: boolean = true;
     protected _maxReconnect: number = 3;
     protected _reconnectTimeout: number = 3000;
@@ -102,6 +108,7 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
         this._connectionResolver.configure(config);
         this._options = this._options.override(config.getSection("options"));
 
+        this._clientId = config.getAsStringWithDefault("client_id", this._clientId);
         this._retryConnect = config.getAsBooleanWithDefault("options.retry_connect", this._retryConnect);
         this._maxReconnect = config.getAsIntegerWithDefault("options.max_reconnect", this._maxReconnect);
         this._reconnectTimeout = config.getAsIntegerWithDefault("options.reconnect_timeout", this._reconnectTimeout);
@@ -148,6 +155,7 @@ export class NatsConnection implements IMessageQueueConnection, IReferenceable, 
 
             try {
                 let options: any = {
+                    "name": this._clientId,
                     "reconnect": this._retryConnect,
                     "maxReconnectAttempts": this._maxReconnect,
                     "reconnectTimeWait": this._reconnectTimeout

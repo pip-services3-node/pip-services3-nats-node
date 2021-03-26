@@ -24,6 +24,7 @@ const NatsAbstractMessageQueue_1 = require("./NatsAbstractMessageQueue");
  *   - password:                    user password
  * - options:
  *   - serialize_message:    (optional) true to serialize entire message as JSON, false to send only message payload (default: true)
+ *   - autosubscribe:        (optional) true to automatically subscribe on option (default: false)
  *   - retry_connect:        (optional) turns on/off automated reconnect when connection is log (default: true)
  *   - max_reconnect:        (optional) maximum reconnection attempts (default: 3)
  *   - reconnect_timeout:    (optional) number of milliseconds to wait on each reconnection attempt (default: 3000)
@@ -72,6 +73,15 @@ class NatsMessageQueue extends NatsAbstractMessageQueue_1.NatsAbstractMessageQue
     constructor(name) {
         super(name, new pip_services3_messaging_node_1.MessagingCapabilities(false, true, true, true, true, false, false, false, true));
         this._messages = [];
+    }
+    /**
+     * Configures component by passing configuration parameters.
+     *
+     * @param config    configuration parameters to be set.
+     */
+    configure(config) {
+        super.configure(config);
+        this._autoSubscribe = config.getAsBooleanWithDefault("options.autosubscribe", this._autoSubscribe);
     }
     /**
      * Opens the component.

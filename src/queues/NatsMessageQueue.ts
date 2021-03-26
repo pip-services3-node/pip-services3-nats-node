@@ -2,6 +2,7 @@
 /** @hidden */
 const async = require('async');
 
+import { ConfigParams } from 'pip-services3-commons-node';
 import { IMessageReceiver } from 'pip-services3-messaging-node';
 import { MessageEnvelope } from 'pip-services3-messaging-node';
 import { MessagingCapabilities } from 'pip-services3-messaging-node';
@@ -26,6 +27,7 @@ import { NatsAbstractMessageQueue } from './NatsAbstractMessageQueue';
  *   - password:                    user password
  * - options:
  *   - serialize_message:    (optional) true to serialize entire message as JSON, false to send only message payload (default: true)
+ *   - autosubscribe:        (optional) true to automatically subscribe on option (default: false)
  *   - retry_connect:        (optional) turns on/off automated reconnect when connection is log (default: true)
  *   - max_reconnect:        (optional) maximum reconnection attempts (default: 3)
  *   - reconnect_timeout:    (optional) number of milliseconds to wait on each reconnection attempt (default: 3000)
@@ -66,6 +68,8 @@ import { NatsAbstractMessageQueue } from './NatsAbstractMessageQueue';
  *     });
  */
 export class NatsMessageQueue extends NatsAbstractMessageQueue {
+    protected _autoSubscribe: boolean;
+    protected _subscribe: boolean;
     protected _messages: MessageEnvelope[] = [];
     protected _receiver: IMessageReceiver;
 
@@ -76,6 +80,17 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
      */
     public constructor(name?: string) {
         super(name, new MessagingCapabilities(false, true, true, true, true, false, false, false, true));
+    }
+
+    /**
+     * Configures component by passing configuration parameters.
+     * 
+     * @param config    configuration parameters to be set.
+     */
+     public configure(config: ConfigParams): void {
+         super.configure(config);
+
+        this._autoSubscribe = config.getAsBooleanWithDefault("options.autosubscribe", this._autoSubscribe);
     }
 
     /**
