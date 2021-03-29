@@ -299,8 +299,13 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
             let checkInterval = 100;
             let elapsedTime = 0;
             async.whilst(
-                () => {
-                    return this.isOpen() && elapsedTime < waitTimeout && message == null;
+                (callback) => {
+                    let test = this.isOpen() && elapsedTime < waitTimeout && message == null;
+                    if (typeof callback === "function") {
+                        callback(null, test);
+                    } else {
+                        return test;
+                    }
                 },
                 (whilstCallback) => {
                     elapsedTime += checkInterval;
@@ -384,8 +389,13 @@ export class NatsMessageQueue extends NatsAbstractMessageQueue {
 
             // Resend collected messages to receiver
             async.whilst(
-                () => {
-                    return this.isOpen() && this._messages.length > 0;
+                (callback) => {
+                    let test = this.isOpen() && this._messages.length > 0;
+                    if (typeof callback === "function") {
+                        callback(null, test);
+                    } else {
+                        return test;
+                    }
                 },
                 (whilstCallback) => {
                     let message = this._messages.shift();
